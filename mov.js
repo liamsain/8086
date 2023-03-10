@@ -1,5 +1,6 @@
 import { RegLookup } from './consts/consts.js';
 import { binToInt16, binToInt8 } from './helpers.js';
+
 export function movImmedToReg(b) {
   const bytes = [b];
   function getIns() {
@@ -27,5 +28,42 @@ export function movImmedToReg(b) {
   }
   function pushByte(b) { bytes.push(b) }
 
+  return { getIns, insComplete, pushByte };
+}
+
+export function movRegMemToFromRegMem(b) {
+  const bytes = [b];
+  function getIns() {
+    const firstByte = bytes[0];
+    const secondByte = bytes[1];
+    if (!secondByte.length) {
+      console.error('Cannot get instruction. Second byte not present');
+      return;
+    }
+    const dField = firstByte[6]; // 1 = reg field in second byte is dest, 0= reg field in second byte is src
+    const wField = firstByte[7]; // 0 = byte op, 1 = word op
+    // Mode: 00=memory mode no displacement, 01=mem mode 8-bit displacement, 10=mem mode 16 bit displacement, 11=reg mode(no displacement)
+    const mod = secondByte.slice(0, 2);
+    const reg = secondByte.slice(2, 5);
+    const rm = secondByte.slice(5); // register/memory. when mod=11, rm idents second reg 
+    const firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`
+    const secondReg = `${wField == 1 ? RegLookup[rm].W1 : RegLookup[rm].W0}`
+
+    const dest = dField == 1 ? firstReg : secondReg;
+    const src = dField == 1 ? secondReg : firstReg;
+    return `mov ${dest}, ${src}`;
+  }
+  function insComplete() {
+    const secondByte = bytes[1];
+
+    if (!secondByte) {
+      return false;
+    }
+    const mod = secondByte.slice(0, 2); // Mode. 00=memory mode no displacement, 01=mem mode 8-bit displacement, 10=mem mode 16 bit displacement, 11=reg mode(no displacement)
+    return mod == '11'; // no displacement, so don't expect a third byte!
+  }
+  function pushByte(b) {
+    bytes.push(b);
+  }
   return { getIns, insComplete, pushByte };
 }

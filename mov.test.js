@@ -1,27 +1,32 @@
 import assert from 'assert';
-// import { movImmedToReg } from './index.js';
-import { movImmedToReg } from './mov.js';
+import { getInstructionsFromBuffer } from './decoder.js';
 
-describe('Array', function () {
-  describe('#indexOf()', function () {
-    it('should return -1 when the value is not present', function () {
-      assert.equal([1, 2, 3].indexOf(4), -1);
-    });
-  });
-});
-describe('movImmedToReg', function () {
+describe('getInstructionsFromBuffer', function () {
   it('should return correct instructions from binary', function () {
     const tests = [
       {
-        bytes: ['10110001', '00001100'],
-        expected: 'mov cl, 12'
+        // reg to reg
+        hex: '89de88c6',
+        expected: ['mov si, bx', 'mov dh, al']
+      },
+      {
+        // 8 bit immed to reg
+        hex: 'b10cb5f4',
+        expected: ['mov cl, 12', 'mov ch, -12']
+      },
+      {
+        // 16 bit immed to reg
+        hex: 'b90c00b9f4ffba6c0fba94f0', 
+        expected: ['mov cx, 12', 'mov cx, -12', 'mov dx, 3948', 'mov dx, -3948']
+      },
+      {
+        
       }
     ];
     tests.forEach(t => {
-      const insObj = movImmedToReg(t.bytes[0]);
-      t.bytes.slice(1).forEach(b => { insObj.pushByte(b) });
-      assert.equal(insObj.insComplete(), true);
-      assert.equal(insObj.getIns(), t.expected);
+      const buffer = Buffer.from(t.hex, 'hex');
+      const instructions = getInstructionsFromBuffer(buffer);
+      t.expected.forEach((ins, insI) => assert.equal(instructions[insI], ins));
     });
   });
 });
