@@ -1,82 +1,43 @@
-const fs = require('fs');
+import { MovTypes, RegLookup } from './consts/consts.js';
+import { movImmedToReg } from './mov.js';
+import fs from 'fs';
+
 const fileName = process.argv[2];
 if (!fileName) {
   console.error('Please supply a file');
-  return;
 }
 const buf = fs.readFileSync(fileName);
+const instructionsInBuffer = getInstructionsFromBuffer(buf);
+instructionsInBuffer.forEach(ins => console.log(ins));
 
-const RegLookup = {
-  '000': { W0: 'al', W1: 'ax' },
-  '001': { W0: 'cl', W1: 'cx' },
-  '010': { W0: 'dl', W1: 'dx' },
-  '011': { W0: 'bl', W1: 'bx' },
-  '100': { W0: 'ah', W1: 'sp' },
-  '101': { W0: 'ch', W1: 'bp' },
-  '110': { W0: 'dh', W1: 'si' },
-  '111': { W0: 'bh', W1: 'di' }
-};
 
-const MovTypes = {
-  RegMemToFromRegMem: '100010',
-  ImmedToReg: '1011'
-};
+function getInstructionsFromBuffer(buf) {
+  let currentIns = null;
+  const instructions = ['bits 16'];
 
-let currentIns = null;
-
-console.log('bits 16\n');
-for (const insByte of buf) {
-  const currentByte = insByte.toString(2).padStart(8, '0');
-  console.log(currentByte);
-  if (currentIns) {
-    currentIns.pushByte(currentByte);
-    if (currentIns.insComplete()) {
-      console.log(currentIns.printIns());
-      currentIns = null;
+  for (const insByte of buf) {
+    const currentByte = insByte.toString(2).padStart(8, '0');
+    // console.log(currentByte);
+    if (currentIns) {
+      currentIns.pushByte(currentByte);
+      if (currentIns.insComplete()) {
+        instructions.push(currentIns.getIns());
+        currentIns = null;
+      }
+    } else {
+      if (currentByte.startsWith(MovTypes.RegMemToFromRegMem)) {
+        currentIns = movRegMemToFromRegMem(currentByte);
+      } else if (currentByte.startsWith(MovTypes.ImmedToReg)) {
+        currentIns = movImmedToReg(currentByte);
+      }
     }
-  } else {
-    if (currentByte.startsWith(MovTypes.RegMemToFromRegMem)) {
-      currentIns = movRegMemToFromRegMem(currentByte);
-    } else if (currentByte.startsWith(MovTypes.ImmedToReg)) {
-      currentIns = movImmedToReg(currentByte);
-    }
-
   }
+  return instructions;
 }
 
-function movImmedToReg(b) {
+export function movRegMemToFromRegMem(b) {
   const bytes = [b];
-  function printIns() {
-    if (bytes.length < 2) {
-      console.error('Cannot get instruction. Not enough bytes');
-      return;
-    }
-    const firstByte = bytes[0];
-    const wField = firstByte[4];
-    const binData = wField == 1 ? `${bytes[2]}${bytes[1]}` : bytes[1];
-    const reg = firstByte.slice(5);
-    const dest = wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0;
-    return `mov ${dest}, ${wField == 1 ? binToInt16(binData) : binToInt8(binData)}`;
-  }
-  function insComplete() {
-    if (bytes.length < 2) {
-      return false;
-    }
-
-    const wField = bytes[0][4];
-    if (wField == 0) {
-      return true;
-    }
-    return bytes.length === 3;
-  }
-  function pushByte(b) { bytes.push(b) }
-
-  return { printIns, insComplete, pushByte };
-}
-
-function movRegMemToFromRegMem(b) {
-  const bytes = [b];
-  function printIns() {
+  function getIns() {
     const firstByte = bytes[0];
     const secondByte = bytes[1];
     if (!secondByte.length) {
@@ -108,20 +69,5 @@ function movRegMemToFromRegMem(b) {
   function pushByte(b) {
     bytes.push(b);
   }
-  return { printIns, insComplete, pushByte };
-}
-
-function binToInt8(b) {
-  let num = parseInt(b, 2);
-  if (num > 127) { 
-    num = num - 256 
-  }
-  return num;
-}
-function binToInt16(b) {
-  let num = parseInt(b, 2);
-  if (num > 32767) { 
-    num = num - 65536
-  }
-  return num;
+  return { getIns, insComplete, pushByte };
 }
