@@ -12,3 +12,15 @@ export const MovTypes = {
   RegMemToFromRegMem: '100010',
   ImmedToReg: '1011'
 };
+
+// the key is r/m
+export const AddressCalcLookup = {
+  '000' : {Mod00: 'bx + si'},
+  '001' : {Mod00: 'bx + di'},
+  '010' : {Mod00: 'bp + si'},
+  '011' : {Mod00: 'bp + di'},
+  '100' : {Mod00: 'si'},
+  '101' : {Mod00: 'di'},
+  '110' : {Mod00: 'direct displacement'},
+  '111' : {Mod00: 'bx'},
+};

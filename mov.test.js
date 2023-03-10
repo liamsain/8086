@@ -20,7 +20,9 @@ describe('getInstructionsFromBuffer', function () {
         expected: ['mov cx, 12', 'mov cx, -12', 'mov dx, 3948', 'mov dx, -3948']
       },
       {
-        
+        // source address calculation
+        hex: '8a008b1b8b56',
+        expected: ['mov al, [bx + si]', 'mov bx, [bp + di]', 'mov dx, [bp]']
       }
     ];
     tests.forEach(t => {
