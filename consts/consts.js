@@ -8,12 +8,8 @@ export const RegLookup = {
   '110': { W0: 'dh', W1: 'si' },
   '111': { W0: 'bh', W1: 'di' }
 };
-export const MovTypes = {
-  RegMemToFromRegMem: '100010',
-  ImmedToReg: '1011'
-};
 
-// the key is r/m
+// the key is r/m:
 export const AddressCalcLookup = {
   '000': 'bx + si',
   '001': 'bx + di',
@@ -24,3 +20,12 @@ export const AddressCalcLookup = {
   '110': 'bp',
   '111': 'bx',
 };
+export const MovTypes = {
+  RegMemToFromRegMem: '100010',
+  ImmedToReg: '1011',
+};
+export const ArithmeticTypes = {
+  Add: ['000000', '100000', '0000010'],
+  Sub: ['001010', '100000', '0010110']
+};
+
