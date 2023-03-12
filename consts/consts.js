@@ -15,12 +15,12 @@ export const MovTypes = {
 
 // the key is r/m
 export const AddressCalcLookup = {
-  '000' : {Mod00: 'bx + si'},
-  '001' : {Mod00: 'bx + di'},
-  '010' : {Mod00: 'bp + si'},
-  '011' : {Mod00: 'bp + di'},
-  '100' : {Mod00: 'si'},
-  '101' : {Mod00: 'di'},
-  '110' : {Mod00: 'direct displacement'},
-  '111' : {Mod00: 'bx'},
+  '000': 'bx + si',
+  '001': 'bx + di',
+  '010': 'bp + si',
+  '011': 'bp + di',
+  '100': 'si',
+  '101': 'di',
+  '110': 'bp',
+  '111': 'bx',
 };

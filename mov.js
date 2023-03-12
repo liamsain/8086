@@ -1,14 +1,6 @@
 import { RegLookup, AddressCalcLookup } from './consts/consts.js';
 import { binToInt16, binToInt8 } from './helpers.js';
-export function movWithSrcAddressCalc(b) {
-  const bytes = [b];
-  function getIns() {
 
-  }
-  function insComplete() { }
-  function pushByte(b) { bytes.push(b);}
-  return { getIns, insComplete, pushByte }
-}
 export function movImmedToReg(b) {
   const bytes = [b];
   function getIns() {
@@ -50,10 +42,10 @@ export function movRegMemToFromRegMem(b) {
     }
 
     // dField: 1 = reg field in second byte is dest, 0= reg field in second byte is src
-    const dField = firstByte[6]; 
+    const dField = firstByte[6];
 
     // wField: // 0 = byte op, 1 = word op
-    const wField = firstByte[7]; 
+    const wField = firstByte[7];
 
     /* 00=mem mode no displacement, 01=mem mode 8-bit displacement,
        10=mem mode 16 bit displacement, 11=reg mode(no displacement)
@@ -63,12 +55,23 @@ export function movRegMemToFromRegMem(b) {
     const rm = secondByte.slice(5); // register/memory. when mod=11, rm idents second reg 
     let firstReg = '';
     let secondReg = '';
-    if (mod == '11') {
+    if (mod == '00') {
+      firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`;
+      secondReg = `[${AddressCalcLookup[rm]}]`;
+    } else if (mod == '01') {
+      firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`
+      const displacement = binToInt8(bytes[2]);
+      const displacementText = displacement === 0 ? '' : ` + ${displacement}`;
+      secondReg = `[${AddressCalcLookup[rm]}${displacementText}]`;
+    } else if (mod == '10') {
+      firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`
+      const binData = `${bytes[3]}${bytes[2]}`;
+      const displacement = binToInt16(binData);
+      const displacementText = displacement === 0 ? '' : ` + ${displacement}`;
+      secondReg = `[${AddressCalcLookup[rm]}${displacementText}]`;
+    } else if (mod == '11') {
       firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`
       secondReg = `${wField == 1 ? RegLookup[rm].W1 : RegLookup[rm].W0}`
-    } else if (mod == '00') {
-      firstReg = `${wField == 1 ? RegLookup[reg].W1 : RegLookup[reg].W0}`;
-      secondReg = `[${AddressCalcLookup[rm].Mod00}]`;
     }
 
     const dest = dField == 1 ? firstReg : secondReg;
@@ -82,12 +85,19 @@ export function movRegMemToFromRegMem(b) {
       return false;
     }
     // Mode. 00=memory mode no displacement, 01=mem mode 8-bit displacement, 10=mem mode 16 bit displacement, 11=reg mode(no displacement)
-    const mod = secondByte.slice(0, 2); 
-    if (mod == '11') {
-      return true;// no displacement, so don't expect a third byte!
-    }
+    const mod = secondByte.slice(0, 2);
     if (mod == '00') {
       return true;
+    }
+    if (mod == '01') {
+      debugger;
+      return bytes.length === 3;
+    }
+    if (mod == '10') {
+      return bytes.length === 4;
+    }
+    if (mod == '11') {
+      return true;// no displacement, so don't expect a third byte!
     }
   }
   function pushByte(b) {

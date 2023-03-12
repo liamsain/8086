@@ -5,7 +5,6 @@ export function getInstructionsFromBuffer(buf) {
   const instructions = [];
 
   for (const insByte of buf) {
-    debugger;
     const currentByte = insByte.toString(2).padStart(8, '0');
     if (currentIns) {
       currentIns.pushByte(currentByte);
