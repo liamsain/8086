@@ -38,9 +38,9 @@ describe('getInstructionsFromBuffer', function () {
         // ; Dest address calculation
         hex: '8909880a886e00',
         expected: [
-          'mov[bx + di], cx',
-          'mov[bp + si], cl',
-          'mov[bp], ch',
+          'mov [bx + di], cx',
+          'mov [bp + si], cl',
+          'mov [bp], ch',
         ]
 
       }
